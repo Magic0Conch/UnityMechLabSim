@@ -1,0 +1,5 @@
+API Documentation:
+https://dl.dropboxusercontent.com/u/416413867/PdfRendererDoc/index.html
+
+PDF Viewer Documentation:
+https://www.dropbox.com/s/tssavtnvaym2t6b/DocumentationEN.pdf?raw=1

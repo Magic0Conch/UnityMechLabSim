@@ -1,0 +1,7 @@
+Project Setup:
+1- Import WebGLTemplate.unitypackage
+2- Go into Player settings\Resolution and Presentation
+3- Select PDFRenderer WebGL Template
+
+API Usage:
+Please refer to the WebGL_API_Usage example scene.
