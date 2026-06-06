@@ -34,13 +34,13 @@ static class WebData
         FileOpenDialog dialog = new FileOpenDialog();
         dialog.structSize = Marshal.SizeOf(dialog);
         //dialog.filter = "Doc Files\0*.doc\0Docx files\0*.docx\0zip files\0*.zip\0zip files\0*.zip\0pdf files\0*.pdf\07z files\0*.7z\0rar files\0*.rar\0xls files\0*.xls\0xlsx files\0*.xlsx\0\0";
-        dialog.filter = "表格文件\0*.xls;*.xlsx;*.csv\0Excel 97-2003\0*.xls\0Excel 2007+\0*.xlsx\0CSV\0*.csv\0所有文件\0*.*\0\0";
+        dialog.filter = "所有文件\0*.*\0表格文件\0*.xls;*.xlsx;*.csv\0Excel 97-2003\0*.xls\0Excel 2007+\0*.xlsx\0CSV\0*.csv\0\0";
         dialog.file = new string(new char[256]);
         dialog.maxFile = dialog.file.Length;
         dialog.fileTitle = new string(new char[64]);
         dialog.maxFileTitle = dialog.fileTitle.Length;
         dialog.title = "Open File Dialog";
-        dialog.defExt = "doc";
+        dialog.defExt = "*";
         dialog.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000200 | 0x00000008;
 
         if (DialogShow.GetOpenFileName(dialog))

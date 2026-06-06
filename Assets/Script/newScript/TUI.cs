@@ -19,7 +19,7 @@ public class TUI : MonoBehaviour
     /// D：下载选中用户信息到Excel 下载选中人员分工 下载选中模型确定 下载选中加工工艺安排 下载选中凸/凹模加工 下载选中成品检验 下载选中实验总结
     /// U：上传实验指导书，上传实验报告，上传实验安全考试，上传职工素养测试
     /// S：返回主菜单 退出
-    /// O：重新载入 插入一项 插入多项 删除选中项 全选 全不选
+    /// O：重新载入 插入一项 插入多项 删除选中项 全选 全不选 插入教师账号
     /// 
     /// </summary>
     public Transform content;
@@ -32,6 +32,7 @@ public class TUI : MonoBehaviour
     Dictionary<string, HashSet<string>> majorToClass;
     XmlDocument xmlDocument = new XmlDocument();
     InputField[] insertIn;
+    bool _insertAsTeacher;
     class User
     {
         public Dictionary<string, string> info = new Dictionary<string, string>();
@@ -224,40 +225,19 @@ public class TUI : MonoBehaviour
         //transimitProcess.SetActive(true);
         Slider slider = go.transform.GetChild(0).GetComponent<Slider>();
         if (index == 0)
-        {
-            transimitProcess.SetActive(true);
             UploadSubmit(slider, "实验指导书");
-        }
         else if (index == 1)
-        {
-            transimitProcess.SetActive(true);
             UploadSubmit(slider, "实验报告模板");
-        }
         else if(index == 2)
-        {
-            transimitProcess.SetActive(true);
             UploadSubmit(slider, "实验安全考试");
-        }
         else if(index ==3)
-        {
-            transimitProcess.SetActive(true);
             UploadSubmit(slider, "职工素养测试");
-        }
         else if (index == 4)
-        {
-            transimitProcess.SetActive(true);
             UploadSubmit(slider, "实验目的内容");
-        }
         else if (index == 5)
-        {
-            transimitProcess.SetActive(true);
             UploadSubmit(slider, "m2");
-        }
         else if (index == 6)
-        {
-            transimitProcess.SetActive(true);
             UploadSubmit(slider, "m3");
-        }
         else if (index == 7)
         {
             //List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
@@ -319,7 +299,16 @@ public class TUI : MonoBehaviour
         }
         else if (index == 1)
         {
+            _insertAsTeacher = false;
             InsertSingleItem.SetActive(true);
+            Message.MessageBox("插入学生账号：密码可留空（默认与用户名相同）。");
+            Debug.Log($"[TUI] OChange index={index}, _insertAsTeacher={_insertAsTeacher} (student mode)");
+        }
+        else if (index == 6)
+        {
+            _insertAsTeacher = true;
+            InsertSingleItem.SetActive(true);
+            Debug.Log($"[TUI] OChange index={index}, _insertAsTeacher={_insertAsTeacher} (teacher mode)");
         }
         else if(index == 2)
         {
@@ -553,34 +542,57 @@ public class TUI : MonoBehaviour
     {
         List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
         string[] data = new string[5];
-        data[0] = insertIn[0].text;
-        if(data[0]=="")
+        data[0] = insertIn[0].text.Trim();
+        if (data[0] == "")
         {
             Message.MessageBox("用户名不能为空");
             return;
         }
-        data[1] = insertIn[1].text!=""?insertIn[1].text:data[0];
+        if (_insertAsTeacher)
+        {
+            if (data[0].Length < 6)
+            {
+                Message.MessageBox("教师用户名不少于6位");
+                return;
+            }
+            if (string.IsNullOrEmpty(insertIn[1].text))
+            {
+                Message.MessageBox("教师账号必须填写密码");
+                return;
+            }
+            data[1] = insertIn[1].text;
+        }
+        else
+        {
+            data[1] = insertIn[1].text != "" ? insertIn[1].text : data[0];
+        }
         for (int i = 2; i < 5; i++)
             data[i] = insertIn[i].text != "" ? insertIn[i].text : "暂无";
-        formData.Add(new MultipartFormDataSection(Constant.propname.requesttype,Constant.WebCommand.INSERTSINGLEUSER.ToString()));
-        formData.Add(new MultipartFormDataSection(Constant.propname.username,data[0]));
-        formData.Add(new MultipartFormDataSection(Constant.propname.password, data[1]));
+        formData.Add(new MultipartFormDataSection(Constant.propname.requesttype, Constant.WebCommand.INSERTSINGLEUSER.ToString()));
+        formData.Add(new MultipartFormDataSection(Constant.propname.username, data[0]));
+        formData.Add(WebFormFields.Section(Constant.propname.password, data[1]));
         formData.Add(new MultipartFormDataSection(Constant.propname.name, data[2]));
         formData.Add(new MultipartFormDataSection(Constant.propname.major, data[3]));
         formData.Add(new MultipartFormDataSection(Constant.propname.theClass, data[4]));
+        string roleValue = _insertAsTeacher ? "teacher" : "student";
+        formData.Add(WebFormFields.Section(Constant.propname.role, roleValue));
+        bool insertTeacher = _insertAsTeacher;
+        Debug.Log($"[TUI] ConfirmInsert _insertAsTeacher={_insertAsTeacher}, username={data[0]}, role={roleValue}");
         Action<string> action = delegate (string s)
         {
-            if(s.Length>0&& s[0]=='T')
+            if (s.Length > 0 && s[0] == 'T')
             {
-                Message.MessageBox("成功");
+                Message.MessageBox(insertTeacher ? "教师账号添加成功" : "学生添加成功");
+                InsertSingleItem.SetActive(false);
+                _insertAsTeacher = false;
                 Reload();
             }
             else
             {
-                Message.MessageBox("失败");
+                Message.MessageBox(insertTeacher ? "教师账号添加失败（用户名已存在或信息不合法）" : "添加失败");
             }
         };
-        StartCoroutine(web.ExcuteSend(WebData.connectUri, formData,action));
+        StartCoroutine(web.ExcuteSend(WebData.connectUri, formData, action));
     }
     public void personalClick()
     {
@@ -598,7 +610,7 @@ public class TUI : MonoBehaviour
         List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
         formData.Add(new MultipartFormDataSection(Constant.propname.requesttype, Constant.WebCommand.UPDATE.ToString()));
         formData.Add(new MultipartFormDataSection(Constant.propname.username, texts[0].text));
-        formData.Add(new MultipartFormDataSection(Constant.propname.password, data[1]));
+        formData.Add(WebFormFields.Section(Constant.propname.password, data[1]));
         formData.Add(new MultipartFormDataSection(Constant.propname.name, data[2]));
         formData.Add(new MultipartFormDataSection(Constant.propname.major, data[3]));
         formData.Add(new MultipartFormDataSection(Constant.propname.theClass, data[4]));
@@ -684,10 +696,27 @@ public class TUI : MonoBehaviour
                 _item.GetChild(j).GetComponentInChildren<Text>().text = users[i].info[pns[j-1]];
         }
     }
+    void HideTransmitProcess(Slider slider = null)
+    {
+        if (slider != null)
+        {
+            slider.value = 0;
+            try
+            {
+                Text label = slider.GetComponentInChildren<Text>();
+                if (label != null) label.text = "0.00%";
+            }
+            catch { }
+        }
+        if (transimitProcess != null)
+            transimitProcess.SetActive(false);
+    }
+
     void UploadSubmit(Slider slider, string username, string path = null)
     {
         if (string.IsNullOrEmpty(WebData.connectUri))
         {
+            HideTransmitProcess(slider);
             Message.MessageBox("未配置服务器地址，请返回登录页设置");
             return;
         }
@@ -696,9 +725,20 @@ public class TUI : MonoBehaviour
             path = WebData.OpenDialog();
             if (path == null)
             {
+                HideTransmitProcess(slider);
                 Message.MessageBox("操作已取消");
                 return;
             }
+        }
+        if (slider != null)
+        {
+            slider.value = 0;
+            try
+            {
+                Text label = slider.GetComponentInChildren<Text>();
+                if (label != null) label.text = "0.00%";
+            }
+            catch { }
         }
         transimitProcess.SetActive(true);
         StartCoroutine(web.UpLoadFile(WebData.connectUri, path, slider, username, null, true));

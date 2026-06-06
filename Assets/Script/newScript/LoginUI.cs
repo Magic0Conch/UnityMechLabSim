@@ -108,7 +108,7 @@ public class LoginUI : MonoBehaviour
         InfoDic[Constant.propname.password] = password ?? "";
         List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
         foreach (var item in InfoDic)
-            formData.Add(new MultipartFormDataSection(item.Key, item.Value ?? ""));
+            formData.Add(WebFormFields.Section(item.Key, item.Value));
         UnityWebRequest request = UnityWebRequest.Post(url, formData);
         request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
         yield return request.SendWebRequest();
@@ -151,6 +151,8 @@ public class LoginUI : MonoBehaviour
                 break;
             case Constant.loginState.FAILED:
                 SetHint("登录失败，请检查用户名或教师密码。");
+                Assets.Message.MessageBox(
+                    "登录失败。\n\n学生：用户名不少于6位，密码可留空。\n教师：须填写正确密码。");
                 break;
         }
     }
