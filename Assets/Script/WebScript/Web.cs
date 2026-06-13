@@ -309,7 +309,11 @@ public class Web : MonoBehaviour
         string detail;
         bool failed = UploadRequestFailed(request, out detail);
         if (failed)
+        {
             ShowUploadFailed(request, detail);
+            if (vanish && sliderProgress != null)
+                sliderProgress.transform.parent.gameObject.SetActive(false);
+        }
         else
         {
             if (vanish && sliderProgress != null)
@@ -327,7 +331,7 @@ public class Web : MonoBehaviour
         InfoDic[Constant.propname.username] = username;
         List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
         foreach (var item in InfoDic)
-            formData.Add(new MultipartFormDataSection(item.Key, item.Value));
+            formData.Add(WebFormFields.Section(item.Key, item.Value));
 //        formData.Add(new MultipartFormFileSection("file", bts));
         UnityWebRequest request = UnityWebRequest.Post(url, formData);
         request.downloadHandler = new DownloadHandlerBuffer();
@@ -342,7 +346,11 @@ public class Web : MonoBehaviour
         string detail;
         bool failed = UploadRequestFailed(request, out detail);
         if (failed)
+        {
             ShowUploadFailed(request, detail);
+            if (vanish && sliderProgress != null)
+                sliderProgress.transform.parent.gameObject.SetActive(false);
+        }
         else
         {
             if (vanish && sliderProgress != null)
@@ -756,4 +764,19 @@ public class Web : MonoBehaviour
 
     }
 
+}
+
+public static class WebFormFields
+{
+    static string Encode(string value) => string.IsNullOrEmpty(value) ? " " : value;
+
+    public static MultipartFormDataSection Section(string name, string value)
+    {
+        return new MultipartFormDataSection(name ?? "field", Encode(value));
+    }
+
+    public static void Add(List<IMultipartFormSection> form, string name, string value)
+    {
+        form.Add(Section(name, value));
+    }
 }

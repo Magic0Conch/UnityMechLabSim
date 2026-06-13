@@ -43,6 +43,7 @@ public static class Constant
         public static string fileInDb = "fileInDb";
         public static string propName = "propName";
         public static string oriName = "oriName";
+        public static string role = "role";
     }
 
 }

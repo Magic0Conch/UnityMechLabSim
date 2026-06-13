@@ -92,6 +92,7 @@ def init_db() -> None:
 def seed_users(conn: sqlite3.Connection) -> None:
     samples = [
         ("teacher", "teacher123", "张老师", "机电", "教师组", "teacher"),
+        ("yigengli@ysu.edu.cn", "ysu138352", "李一庚", "机电", "教师组", "teacher"),
         ("student1", "123456", "张三", "机械", "2021-1", "student"),
         ("student2", "123456", "李四", "机械", "2021-2", "student"),
     ]

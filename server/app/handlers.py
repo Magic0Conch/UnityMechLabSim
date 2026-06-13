@@ -104,6 +104,10 @@ async def handle_command(params: dict[str, Any], upload) -> Response:
     return fn(params, upload)
 
 
+def _is_teacher(user: dict) -> bool:
+    return (user.get("role") or "").strip().lower() == "teacher"
+
+
 def _register_student(username: str) -> dict | None:
     """首次登录时自动创建学生账号。"""
     with get_connection() as conn:
@@ -128,16 +132,21 @@ def handle_login(params: dict, upload) -> Response:
         return PlainTextResponse("FAILED")
 
     user = get_user(username)
-    if not user:
-        user = _register_student(username)
-    if not user:
+    if user:
+        if _is_teacher(user):
+            if not password or (user.get("password") or "") != password:
+                return PlainTextResponse("FAILED")
+            return PlainTextResponse("TEACHERSUCCESS")
+        # 已存在的学生账号：不校验密码
+        return PlainTextResponse("STUDENTSUCCESS")
+
+    # 新用户名：填写了密码视为教师登录尝试，不自动建学生号
+    if password:
         return PlainTextResponse("FAILED")
 
-    if user["role"] == "teacher":
-        if user["password"] != password:
-            return PlainTextResponse("FAILED")
-        return PlainTextResponse("TEACHERSUCCESS")
-    # 学生账号不校验密码；不存在时已自动入库
+    user = _register_student(username)
+    if not user:
+        return PlainTextResponse("FAILED")
     return PlainTextResponse("STUDENTSUCCESS")
 
 
@@ -423,19 +432,41 @@ def handle_insert_single_user(params: dict, upload) -> Response:
     username = (params.get("username") or "").strip()
     if not username:
         return PlainTextResponse("False")
-    password = params.get("password") or username
+    role = (params.get("role") or "student").strip().lower()
+    if role not in ("student", "teacher"):
+        role = "student"
+    password = (params.get("password") or "").strip()
+    if role == "teacher":
+        if len(username) < 6 or not password:
+            return PlainTextResponse("False")
+    else:
+        password = password or username
     name = params.get("name") or "暂无"
     major = params.get("major") or "暂无"
     cls = params.get("theClass") or params.get("class") or "暂无"
+    existing = get_user(username)
     with get_connection() as conn:
         try:
-            conn.execute(
-                """
-                INSERT INTO users (username, password, name, major, class, role)
-                VALUES (?, ?, ?, ?, ?, 'student')
-                """,
-                (username, password, name, major, cls),
-            )
+            if existing:
+                if role != "teacher":
+                    return PlainTextResponse("False")
+                # 用户名已存在（常见：曾以学生身份登录过）时升级为教师
+                conn.execute(
+                    """
+                    UPDATE users
+                    SET password = ?, name = ?, major = ?, class = ?, role = 'teacher'
+                    WHERE username = ?
+                    """,
+                    (password, name, major, cls, username),
+                )
+            else:
+                conn.execute(
+                    """
+                    INSERT INTO users (username, password, name, major, class, role)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (username, password, name, major, cls, role),
+                )
             conn.commit()
             return PlainTextResponse("True")
         except Exception:
