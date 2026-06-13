@@ -1,10 +1,10 @@
 # UnityMechLabSim
-该项目是电火花放电项目的Unity模拟，用于机械学院的教学改革，获得中国大学生计算机设计大赛国家二等奖，于2020年10月被应用于机械学院教学流程中。
-
+## 部署
+[部署手册](https://github.com/Magic0Conch/UnityMechLabSim/blob/5a967e4029cf03aef24360ff3c1e4e5352841bc5/%E9%83%A8%E7%BD%B2%E6%89%8B%E5%86%8C.md)
 ## 功能介绍
 ### 电火花放电实验模拟
 实地考察真实实验环境，使用Photoshop和3Dmax等工具，对操作界面、模型进行还原，使用Unity的动画组件制作动画，并在动画时间轴上绑定事件。
-
+https://github.com/Magic0Conch/UnityMechLabSim/blob/5a967e4029cf03aef24360ff3c1e4e5352841bc5/%E9%83%A8%E7%BD%B2%E6%89%8B%E5%86%8C.md
 完整实验流程模拟：
 
 ![20231107111053](https://cdn.jsdelivr.net/gh/Magic0Conch/gallery/blogs/pictures/20231107111053.png)
